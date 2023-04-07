@@ -7,6 +7,7 @@ class QAction;
 class QActionGroup;
 class QLabel;
 class QMenu;
+class QPushButton;
 QT_END_NAMESPACE
 
 class BinaryFileToQrCodeWindow : public QMainWindow
@@ -14,7 +15,7 @@ class BinaryFileToQrCodeWindow : public QMainWindow
     Q_OBJECT
 
 public:
-    BinaryFileToQrCodeWindow(std::string const& selectedFile,
+    BinaryFileToQrCodeWindow(std::string selectedFile,
                              uint8_t scale,
                              uint8_t repeatCount,
                              uint16_t framerateMs,
@@ -22,15 +23,19 @@ public:
                              bool isFullscreen = true,
                              QWidget *parent = nullptr);
     ~BinaryFileToQrCodeWindow() = default;
+    auto configLayout() -> QPushButton*;
+    auto generatorLayout() -> QLabel*;
+    void generate();
 
 private:
     void createActions();
     void createMenus();
 
-    QMenu *helpMenu{};
-    QAction *exitAct{};
-    QAction *aboutAct{};
-    QAction *aboutQtAct{};
+    QMenu* helpMenu{};
+    QAction* exitAct{};
+    QAction* aboutAct{};
+    QAction* aboutQtAct{};
+    QWidget* _mainWidget{};
 
     std::string _selectedFile{};
     uint8_t _scale{};

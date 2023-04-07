@@ -136,7 +136,125 @@ auto decode(cv::Mat const &imGray) -> std::vector<DecodedObject>
 
 } // anonymous
 
-BinaryFileToQrCodeWindow::BinaryFileToQrCodeWindow(std::string const& selectedFile,
+auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
+{
+  if (_mainWidget)
+  {
+    qDeleteAll(_mainWidget->children());
+    delete _mainWidget;
+  }
+
+  auto selectFileLabel = new QLabel(QString::fromStdString(_selectedFile));
+  auto selectFileButton = new QPushButton(tr("Select input data file(*.*)"));
+  connect(selectFileButton, &QPushButton::clicked, [=]() {
+    QString file = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this,
+                                                                         tr("Open data file"),
+                                                                         QDir::currentPath()));
+    if (!file.isEmpty())
+    {
+      selectFileLabel->setText(file);
+      _selectedFile = file.toStdString();
+    }
+  });
+
+  auto scaleSpinBox = new QSpinBox;
+  scaleSpinBox->setRange(1, 10);
+  scaleSpinBox->setSuffix(tr(" x"));
+  scaleSpinBox->setValue(_scale);
+  connect(scaleSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+    _scale = value;
+  });
+
+  auto repeatCountSpinBox = new QSpinBox;
+  repeatCountSpinBox->setRange(1, 10);
+  repeatCountSpinBox->setSuffix(tr(" count"));
+  repeatCountSpinBox->setValue(_repeatCount);
+  connect(repeatCountSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+    _repeatCount = value;
+  });
+
+  auto frameSpinBox = new QSpinBox;
+  frameSpinBox->setRange(1, 60);
+  frameSpinBox->setSuffix(tr(" frames/s"));
+  frameSpinBox->setValue(1000/_framerateMs);
+  connect(frameSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+    _framerateMs = 1000/value;
+  });
+
+  auto generateButton = new QPushButton(tr("Run generating"));
+
+  auto layoutConfig = new QVBoxLayout;
+  layoutConfig->addWidget(selectFileLabel);
+  layoutConfig->addWidget(selectFileButton);
+  layoutConfig->addWidget(scaleSpinBox);
+  layoutConfig->addWidget(repeatCountSpinBox);
+  layoutConfig->addWidget(frameSpinBox);
+  layoutConfig->addWidget(generateButton);
+
+  _mainWidget = new QWidget;
+  setCentralWidget(_mainWidget);
+
+  _mainWidget->setLayout(layoutConfig);
+
+  connect(generateButton, &QPushButton::clicked, [=]() { generate(); });
+  return generateButton;
+}
+
+auto BinaryFileToQrCodeWindow::generatorLayout() -> QLabel*
+{
+  if (_mainWidget)
+  {
+    qDeleteAll(_mainWidget->children());
+    delete _mainWidget;
+  }
+
+  auto pictureLabel = new QLabel();
+
+  auto layoutGenerate = new QVBoxLayout;
+  layoutGenerate->addWidget(pictureLabel);
+
+  _mainWidget = new QWidget;
+  setCentralWidget(_mainWidget);
+  _mainWidget->setLayout(layoutGenerate);
+  return pictureLabel;
+}
+
+void  BinaryFileToQrCodeWindow::generate()
+{
+  auto pictureLabel = generatorLayout();
+
+  for(int repeatLoop = 0; repeatLoop < _repeatCount; ++repeatLoop)
+  {
+    encodeBinaryFileToQRCodes(_selectedFile, [&](std::vector<uint8_t>& qrMat, std::vector<uint8_t> const& chunkData) {
+      auto size = (int)sqrt(qrMat.size());
+      if (_testNeeded)
+      {
+        auto decodedData = decode(qrMat.data(), size, size);
+        if(decodedData.empty())
+        {
+          throw std::runtime_error("fatal error not detected");
+        }
+        if (std::memcmp(decodedData[0].data.data(), chunkData.data(), chunkData.size()) != 0)
+        {
+          throw std::runtime_error("fatal error not equal");
+        }
+      }
+
+      auto image = QImage(qrMat.data(),
+                          size,
+                          size,
+                          size,
+                          QImage::Format_Grayscale8).scaled(size * _scale, size * _scale, Qt::KeepAspectRatio);
+      pictureLabel->setPixmap(QPixmap::fromImage(image));
+      QCoreApplication::processEvents();
+      std::this_thread::sleep_for(std::chrono::milliseconds(_framerateMs));
+    });
+  }
+
+  configLayout();
+}
+
+BinaryFileToQrCodeWindow::BinaryFileToQrCodeWindow(std::string selectedFile,
                                                    uint8_t scale,
                                                    uint8_t repeatCount,
                                                    uint16_t framerateMs,
@@ -144,123 +262,19 @@ BinaryFileToQrCodeWindow::BinaryFileToQrCodeWindow(std::string const& selectedFi
                                                    bool isFullscreen,
                                                    QWidget *parent)
     : QMainWindow(parent)
-    , _selectedFile{selectedFile}
+    , _selectedFile{std::move(selectedFile)}
     , _scale{scale}
     , _repeatCount{repeatCount}
     , _framerateMs{framerateMs}
     , _testNeeded{testNeeded}
     , _isFullscreen{isFullscreen}
 {
-    auto widget = new QWidget;
-    setCentralWidget(widget);
-
-    auto selectFileLabel = new QLabel(QString::fromStdString(_selectedFile));
-    auto selectFileButton = new QPushButton(tr("Select input data file(*.*)"));
-    connect(selectFileButton, &QPushButton::clicked, [=]() {
-        QString file = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this,
-                                                     tr("Open data file"),
-                                                     QDir::currentPath()));
-        if (!file.isEmpty())
-        {
-            selectFileLabel->setText(file);
-        }
-    });
-
-    auto scaleSpinBox = new QSpinBox(this);
-    scaleSpinBox->setRange(1, 10);
-    scaleSpinBox->setSuffix(tr(" x"));
-    scaleSpinBox->setValue(scale);
-    connect(scaleSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
-      _scale = value;
-    });
-
-    auto repeatCountSpinBox = new QSpinBox(this);
-    repeatCountSpinBox->setRange(1, 10);
-    repeatCountSpinBox->setSuffix(tr(" count"));
-    repeatCountSpinBox->setValue(repeatCount);
-    connect(repeatCountSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
-      _repeatCount = value;
-    });
-
-    auto frameSpinBox = new QSpinBox(this);
-    frameSpinBox->setRange(1, 60);
-    frameSpinBox->setSuffix(tr(" frames/s"));
-    frameSpinBox->setValue(_framerateMs);
-    connect(frameSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
-      _framerateMs = 1000/value;
-    });
-
-    auto pictureLabel = new QLabel();
-    auto generateButton = new QPushButton(tr("Run generating"));
-
-    auto layoutConfig = new QVBoxLayout;
-    layoutConfig->addWidget(selectFileLabel);
-    layoutConfig->addWidget(selectFileButton);
-    layoutConfig->addWidget(scaleSpinBox);
-    layoutConfig->addWidget(repeatCountSpinBox);
-    layoutConfig->addWidget(frameSpinBox);
-    layoutConfig->addWidget(generateButton);
-
-    widget->setLayout(layoutConfig);
-
-    connect(generateButton, &QPushButton::clicked, [=]() {
-      auto layoutGenerate = new QVBoxLayout;
-      layoutGenerate->addWidget(pictureLabel);
-
-      auto inputType = selectFileLabel->text().toStdString();
-
-      qDeleteAll(widget->children());
-
-      widget->setLayout(layoutGenerate);
-      //update();
-      //QCoreApplication::processEvents();
-      for(int repeatLoop = 0; repeatLoop < repeatCount; ++repeatLoop)
-      {
-        encodeBinaryFileToQRCodes(inputType,
-                                  [&](std::vector<uint8_t>& qrMat, std::vector<uint8_t> const& chunkData) {
-          auto size = (int)sqrt(qrMat.size());
-          if (testNeeded)
-          {
-            auto decodedData = decode(qrMat.data(), size, size);
-            if(decodedData.empty())
-            {
-              throw std::runtime_error("fatal error not detected");
-            }
-            if (std::memcmp(decodedData[0].data.data(), chunkData.data(), chunkData.size()) != 0)
-            {
-              throw std::runtime_error("fatal error not equal");
-            }
-          }
-
-          auto image = QImage(qrMat.data(),
-                              size,
-                              size,
-                              size,
-                              QImage::Format_Grayscale8).scaled(size * scale, size * scale, Qt::KeepAspectRatio);
-          pictureLabel->setPixmap(QPixmap::fromImage(image));
-          QCoreApplication::processEvents();
-          std::this_thread::sleep_for(std::chrono::milliseconds(_framerateMs));
-        });
-      }
-
-      qDeleteAll(widget->children());
-
-//      auto layoutConfig = new QVBoxLayout;
-//      layoutConfig->addWidget(selectFileLabel);
-//      layoutConfig->addWidget(selectFileButton);
-//      layoutConfig->addWidget(scaleSpinBox);
-//      layoutConfig->addWidget(repeatCountSpinBox);
-//      layoutConfig->addWidget(frameSpinBox);
-//      layoutConfig->addWidget(generateButton);
-//
-//      widget->setLayout(layoutConfig);
-    });
+    configLayout();
 
     createActions();
     createMenus();
 
     setWindowTitle(tr("Binary file to Qr code tool"));
-    //setMinimumSize(160, 160);
 }
 
 void BinaryFileToQrCodeWindow::createActions()
