@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.25)
+cmake_minimum_required(VERSION 3.22)
 project(BinToPicture)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -28,3 +28,5 @@ target_link_libraries(ASCIIDataDecoder
 
 add_executable(TestASCIIDataGenerator
         TestASCIIDataGenerator.cpp)
+
+add_subdirectory(QtApp)

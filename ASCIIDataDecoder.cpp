@@ -18,7 +18,7 @@ auto decode(cv::Mat const& imGray) -> std::vector<DecodedObject>
   std::vector<DecodedObject> decodedObjects;
 
   zbar::ImageScanner scanner;
-  scanner.set_config(zbar::ZBAR_NONE, /*zbar::ZBAR_CFG_ENABLE*/zbar::ZBAR_CFG_BINARY, 1);
+  scanner.set_config(zbar::ZBAR_NONE, zbar::ZBAR_CFG_BINARY, 1);
 
   zbar::Image image(imGray.cols, imGray.rows, "Y800", (uchar *)imGray.data, imGray.cols * imGray.rows);
 
@@ -99,9 +99,27 @@ int main(int argc, char* argv[])
 
   cv::destroyAllWindows();
 
-  for (auto const& item : decodedDataChunks)
+  auto start = 0;
+  auto end = 0;
+  for (int i = 0; i < (decodedDataChunks.size() - 1 - 1); ++i)
   {
-    file.write((char const*)item.data(), item.size());
+    if (decodedDataChunks[i].size() != decodedDataChunks[i+1].size())
+    {
+      start = i+1+1;
+      break;
+    }
+  }
+  for (int i = start; i < (decodedDataChunks.size() - 1); ++i)
+  {
+    if (decodedDataChunks[i].size() != decodedDataChunks[i+1].size())
+    {
+      end = i+1;
+      break;
+    }
+  }
+  for (int i = start; i <= end; ++i)
+  {
+    file.write((char const*)decodedDataChunks[i].data(), decodedDataChunks[i].size());
   }
   return 0;
 }
