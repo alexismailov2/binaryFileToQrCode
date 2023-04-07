@@ -19,16 +19,16 @@ add_executable(${PROJECT_NAME}
         ../QR-Code-generator/cpp/qrcodegen.cpp
         ${SOURCE})
 
-#target_include_directories(${PROJECT_NAME}
-#        PRIVATE
-#        )
-
 target_link_libraries(${PROJECT_NAME}
         Qt5::Core
         Qt5::Gui
         Qt5::Widgets
-        PkgConfig::ZBar
-        ${OpenCV_LIBS}) # TODO: Should be deleted aftre test
+        PkgConfig::ZBar) # TODO: Should be deleted aftre test
+
+if(BUILD_WITH_OpenCV)
+    target_link_libraries(${PROJECT_NAME}
+            ${OpenCV_LIBS})
+endif()
 
 if (UNIX)
     target_link_libraries(${PROJECT_NAME}

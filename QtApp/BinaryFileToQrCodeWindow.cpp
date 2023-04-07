@@ -4,8 +4,9 @@
 #include "../TimeMeasuring.hpp"
 #include <zbar.h>
 
-// TODO: Should be deleted aftre test
+#ifdef BUILD_WITH_OpenCV
 #include <opencv2/opencv.hpp>
+#endif
 
 #include <QtWidgets>
 
@@ -68,6 +69,7 @@ void encodeBinaryFileToQRCodes(std::string const &inputFilePath,
   });
 }
 
+#ifdef BUILD_WITH_OpenCV
 void qrToMat(cv::Mat &output, qrcodegen::QrCode const &qr, int border = 4)
 {
   TAKEN_TIME();
@@ -92,12 +94,15 @@ void encodeBinaryFileToQRCodes(std::string const &inputFilePath,
     cb(qrMat, chunkData);
   });
 }
+#endif
 
 struct DecodedObject
 {
   std::string type;
   std::string data;
+#ifdef BUILD_WITH_OpenCV
   std::vector<cv::Point> location;
+#endif
 };
 
 auto decode(uint8_t const* data, size_t cols, size_t rows) -> std::vector<DecodedObject>
@@ -120,19 +125,23 @@ auto decode(uint8_t const* data, size_t cols, size_t rows) -> std::vector<Decode
     std::cout << "Type : " << obj.type << std::endl;
     std::cout << "Data size : " << obj.data.size() << std::endl << std::endl;
 
-//    for (int i = 0; i < symbol->get_location_size(); i++) {
-//      obj.location.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
-//    }
+#ifdef BUILD_WITH_OpenCV
+    for (int i = 0; i < symbol->get_location_size(); i++) {
+      obj.location.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
+    }
+#endif
 
     decodedObjects.push_back(obj);
   }
   return decodedObjects;
 }
 
+#ifdef BUILD_WITH_OpenCV
 auto decode(cv::Mat const &imGray) -> std::vector<DecodedObject>
 {
   return decode(imGray.data, imGray.cols, imGray.rows);
 }
+#endif
 
 } // anonymous
 
