@@ -23,7 +23,7 @@ target_link_libraries(${PROJECT_NAME}
         Qt5::Core
         Qt5::Gui
         Qt5::Widgets
-        PkgConfig::ZBar) # TODO: Should be deleted aftre test
+        ${ZBar_LIBS})
 
 if(BUILD_WITH_OpenCV)
     target_link_libraries(${PROJECT_NAME}

@@ -2,7 +2,10 @@
 
 #include "../QR-Code-generator/cpp/qrcodegen.hpp"
 #include "../TimeMeasuring.hpp"
+
+#ifdef BUILD_WITH_ZBar
 #include <zbar.h>
+#endif
 
 #ifdef BUILD_WITH_OpenCV
 #include <opencv2/opencv.hpp>
@@ -105,6 +108,7 @@ struct DecodedObject
 #endif
 };
 
+#ifdef BUILD_WITH_ZBar
 auto decode(uint8_t const* data, size_t cols, size_t rows) -> std::vector<DecodedObject>
 {
   TAKEN_TIME();
@@ -135,6 +139,7 @@ auto decode(uint8_t const* data, size_t cols, size_t rows) -> std::vector<Decode
   }
   return decodedObjects;
 }
+#endif
 
 #ifdef BUILD_WITH_OpenCV
 auto decode(cv::Mat const &imGray) -> std::vector<DecodedObject>
@@ -236,6 +241,7 @@ void  BinaryFileToQrCodeWindow::generate()
   {
     encodeBinaryFileToQRCodes(_selectedFile, [&](std::vector<uint8_t>& qrMat, std::vector<uint8_t> const& chunkData) {
       auto size = (int)sqrt(qrMat.size());
+#ifdef BUILD_WITH_ZBar
       if (_testNeeded)
       {
         auto decodedData = decode(qrMat.data(), size, size);
@@ -248,7 +254,7 @@ void  BinaryFileToQrCodeWindow::generate()
           throw std::runtime_error("fatal error not equal");
         }
       }
-
+#endif
       auto image = QImage(qrMat.data(),
                           size,
                           size,
