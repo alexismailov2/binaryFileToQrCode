@@ -35,17 +35,20 @@ jobs:
       # Build your program with the given configuration
       run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
       
-    - name: Download ASCIIDataDecoder
-      uses: actions/download-artifact@v3
+    - name: Upload ASCIIDataDecoder
+      uses: actions/upload-artifact@v3
       with:
-          name: ${{github.workspace}}/build/ASCIIDataDecoder
+          name: ASCIIDataDecoder
+          path: ${{github.workspace}}/build/ASCIIDataDecoder
 
-    - name: Download ASCIIDataEncoder
-      uses: actions/download-artifact@v3
+    - name: Upload ASCIIDataEncoder
+      uses: actions/upload-artifact@v3
       with:
-          name: ${{github.workspace}}/build/ASCIIDataEncoder
+          name: ASCIIDataEncoder
+          path: ${{github.workspace}}/build/ASCIIDataEncoder
 
-    - name: Download BinnaryFileToQrCodeGUI
-      uses: actions/download-artifact@v3
+    - name: Upload BinnaryFileToQrCodeGUI
+      uses: actions/upload-artifact@v3
       with:
-          name: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
+          name: BinnaryFileToQrCodeGUI
+          path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
