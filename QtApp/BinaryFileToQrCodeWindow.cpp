@@ -2,13 +2,14 @@
 
 #include "../QR-Code-generator/cpp/qrcodegen.hpp"
 #include "../TimeMeasuring.hpp"
+#include "../Header.hpp"
 
 #ifdef BUILD_WITH_ZBar
 #include <zbar.h>
 #endif
 
 #ifdef BUILD_WITH_OpenCV
-#include <opencv2/opencv.hpp>
+//#include <opencv2/opencv.hpp>
 #endif
 
 #include <QtWidgets>
@@ -35,13 +36,19 @@ void binaryFileReadingByChunk(std::string const &filePath,
   auto fileSize = filesize(filePath);
   auto file = std::ifstream(filePath, std::ios::binary);
   auto fileRead = 0;
+  auto i = 0;
   while (fileRead < fileSize) {
     const auto chunkSize = ((fileSize - fileRead) > chunkFileSize)
                            ? chunkFileSize
                            : (fileSize - fileRead);
     //std::cout << "chunkSize: " << chunkSize << std::endl;
-    std::vector<uint8_t> dataFromFile(chunkSize);
-    file.read((char *) dataFromFile.data(), chunkSize);
+    std::vector<uint8_t> dataFromFile(chunkFileSize + sizeof(Header)); //chunkSize
+    Header header{};
+    header.chunkId = i++;
+    header.chunksCount = (fileSize / chunkFileSize) + ((fileSize % chunkFileSize) ? 1 : 0);
+    header.payloadSize = chunkSize;
+    memcpy(dataFromFile.data(), &header, sizeof(Header));
+    file.read((char *) dataFromFile.data() + sizeof(Header), chunkSize);
     cb(dataFromFile);
     fileRead += chunkSize;
   }
@@ -74,30 +81,30 @@ void encodeBinaryFileToQRCodes(std::string const &inputFilePath,
 }
 
 #ifdef BUILD_WITH_OpenCV
-void qrToMat(cv::Mat &output, qrcodegen::QrCode const &qr, int border = 4)
-{
-  TAKEN_TIME();
-  output = cv::Mat::ones(qr.getSize() + border * 2, qr.getSize() + border * 2, CV_8UC1);
-  for (int y = -border; y < qr.getSize() + border; y++)
-  {
-    for (int x = -border; x < qr.getSize() + border; x++)
-    {
-      output.at<uint8_t>(y + border, x + border) = qr.getModule(x, y) ? 0 : 0xFF;
-    }
-  }
-}
-
-void encodeBinaryFileToQRCodes(std::string const &inputFilePath,
-                               std::function<void(cv::Mat &qrMat, std::vector<uint8_t> const &chunkData)> &&cb)
-{
-  TAKEN_TIME();
-  binaryFileReadingByChunk(inputFilePath, 2048, [&](std::vector<uint8_t> const &chunkData) {
-    auto const qr = qrcodegen::QrCode::encodeBinary(chunkData, qrcodegen::QrCode::Ecc::LOW);
-    cv::Mat qrMat;
-    qrToMat(qrMat, qr);
-    cb(qrMat, chunkData);
-  });
-}
+//void qrToMat(cv::Mat &output, qrcodegen::QrCode const &qr, int border = 4)
+//{
+//  TAKEN_TIME();
+//  output = cv::Mat::ones(qr.getSize() + border * 2, qr.getSize() + border * 2, CV_8UC1);
+//  for (int y = -border; y < qr.getSize() + border; y++)
+//  {
+//    for (int x = -border; x < qr.getSize() + border; x++)
+//    {
+//      output.at<uint8_t>(y + border, x + border) = qr.getModule(x, y) ? 0 : 0xFF;
+//    }
+//  }
+//}
+//
+//void encodeBinaryFileToQRCodes(std::string const &inputFilePath,
+//                               std::function<void(cv::Mat &qrMat, std::vector<uint8_t> const &chunkData)> &&cb)
+//{
+//  TAKEN_TIME();
+//  binaryFileReadingByChunk(inputFilePath, 2048, [&](std::vector<uint8_t> const &chunkData) {
+//    auto const qr = qrcodegen::QrCode::encodeBinary(chunkData, qrcodegen::QrCode::Ecc::LOW);
+//    cv::Mat qrMat;
+//    qrToMat(qrMat, qr);
+//    cb(qrMat, chunkData);
+//  });
+//}
 #endif
 
 struct DecodedObject
@@ -105,7 +112,7 @@ struct DecodedObject
   std::string type;
   std::string data;
 #ifdef BUILD_WITH_OpenCV
-  std::vector<cv::Point> location;
+//  std::vector<cv::Point> location;
 #endif
 };
 
@@ -131,9 +138,9 @@ auto decode(uint8_t const* data, size_t cols, size_t rows) -> std::vector<Decode
     std::cout << "Data size : " << obj.data.size() << std::endl << std::endl;
 
 #ifdef BUILD_WITH_OpenCV
-    for (int i = 0; i < symbol->get_location_size(); i++) {
-      obj.location.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
-    }
+//    for (int i = 0; i < symbol->get_location_size(); i++) {
+//      obj.location.push_back(cv::Point(symbol->get_location_x(i), symbol->get_location_y(i)));
+//    }
 #endif
 
     decodedObjects.push_back(obj);
@@ -143,10 +150,10 @@ auto decode(uint8_t const* data, size_t cols, size_t rows) -> std::vector<Decode
 #endif
 
 #ifdef BUILD_WITH_OpenCV
-auto decode(cv::Mat const &imGray) -> std::vector<DecodedObject>
-{
-  return decode(imGray.data, imGray.cols, imGray.rows);
-}
+//auto decode(cv::Mat const &imGray) -> std::vector<DecodedObject>
+//{
+//  return decode(imGray.data, imGray.cols, imGray.rows);
+//}
 #endif
 
 } // anonymous

@@ -1,4 +1,5 @@
 #include "TimeMeasuring.hpp"
+#include "Header.hpp"
 #include "QR-Code-generator/cpp/qrcodegen.hpp"
 
 #include <opencv2/opencv.hpp>
@@ -52,6 +53,26 @@ size_t filesize(std::string const &filename)
   return in.tellg();
 }
 
+//void binaryFileReadingByChunk(std::string const &filePath,
+//                              size_t chunkFileSize,
+//                              std::function<void(std::vector<uint8_t> const &chunkData)> &&cb)
+//{
+//  TAKEN_TIME();
+//  auto fileSize = filesize(filePath);
+//  auto file = std::ifstream(filePath, std::ios::binary);
+//  auto fileRead = 0;
+//  while (fileRead < fileSize) {
+//    const auto chunkSize = ((fileSize - fileRead) > chunkFileSize)
+//                           ? chunkFileSize
+//                           : (fileSize - fileRead);
+//    //std::cout << "chunkSize: " << chunkSize << std::endl;
+//    std::vector<uint8_t> dataFromFile(chunkSize);
+//    file.read((char *) dataFromFile.data(), chunkSize);
+//    cb(dataFromFile);
+//    fileRead += chunkSize;
+//  }
+//}
+
 void binaryFileReadingByChunk(std::string const &filePath,
                               size_t chunkFileSize,
                               std::function<void(std::vector<uint8_t> const &chunkData)> &&cb)
@@ -60,13 +81,19 @@ void binaryFileReadingByChunk(std::string const &filePath,
   auto fileSize = filesize(filePath);
   auto file = std::ifstream(filePath, std::ios::binary);
   auto fileRead = 0;
+  auto i = 0;
   while (fileRead < fileSize) {
     const auto chunkSize = ((fileSize - fileRead) > chunkFileSize)
                            ? chunkFileSize
                            : (fileSize - fileRead);
     //std::cout << "chunkSize: " << chunkSize << std::endl;
-    std::vector<uint8_t> dataFromFile(chunkSize);
-    file.read((char *) dataFromFile.data(), chunkSize);
+    std::vector<uint8_t> dataFromFile(chunkFileSize + sizeof(Header)); //chunkSize
+    Header header{};
+    header.chunkId = i++;
+    header.chunksCount = (fileSize / chunkFileSize) + ((fileSize % chunkFileSize) ? 1 : 0);
+    header.payloadSize = chunkSize;
+    memcpy(dataFromFile.data(), &header, sizeof(Header));
+    file.read((char *) dataFromFile.data() + sizeof(Header), chunkSize);
     cb(dataFromFile);
     fileRead += chunkSize;
   }

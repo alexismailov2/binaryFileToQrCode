@@ -1,10 +1,12 @@
 #include "TimeMeasuring.hpp"
+#include "Header.hpp"
 
 #include <opencv2/opencv.hpp>
 #include <zbar.h>
 
 #include <iostream>
 #include <fstream>
+#include <map>
 
 struct DecodedObject
 {
@@ -43,9 +45,14 @@ auto decode(cv::Mat const& imGray) -> std::vector<DecodedObject>
   return decodedObjects;
 }
 
+size_t filesize(std::string const &filename)
+{
+  std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
+  return in.tellg();
+}
+
 int main(int argc, char* argv[])
 {
-  auto file = std::ofstream(std::string(argv[1]) + "_reassembled.zip", std::ios::binary);
   cv::VideoCapture cap;
   cap.open(argv[1]);
 
@@ -56,6 +63,7 @@ int main(int argc, char* argv[])
                                  static_cast<int32_t>(cap.get(cv::CAP_PROP_FRAME_HEIGHT))));
 
   std::vector<std::vector<uint8_t>> decodedDataChunks;
+  std::set<uint32_t> successPacketIndexes;
 
   cv::Mat frame;
   cv::Mat qrMat;
@@ -78,16 +86,29 @@ int main(int argc, char* argv[])
     }
     else
     {
-      if (decodedDataChunks.empty() ||
-          std::memcmp(decodedData[0].data.data(), decodedDataChunks.back().data(), decodedDataChunks.back().size()) != 0)
+      Header header;
+      memcpy(&header, decodedData[0].data.data(), sizeof(Header));
+      if (!successPacketIndexes.count(header.chunkId))
       {
-        decodedDataChunks.emplace_back(decodedData[0].data.begin(), decodedData[0].data.end());
-        std::string frameText = std::string("QRCode ok, chunk: ") + std::to_string(decodedDataChunks.size());
-        std::cout << frameText << std::endl;
+        auto outFile = std::ofstream(std::string("./GottenChunks/") + std::to_string(header.chunkId) + ".chk", std::ios::binary);
+        outFile.write((char const*)decodedData[0].data.data() + sizeof(Header), decodedData[0].data.size() - sizeof(Header));
+        successPacketIndexes.insert(header.chunkId);
+
+        cv::rectangle(frame, cv::Rect{decodedData[0].location[0], decodedData[0].location[2]}, cv::Scalar(0, 255, 0), 3);
+        std::string frameText = std::string("QRCode successfully found, gottenChunk: ") + std::to_string(successPacketIndexes.size());
+        cv::putText(frame, frameText, cv::Point(10, frame.rows/2), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255), 5);
       }
-      cv::rectangle(frame, cv::Rect{decodedData[0].location[0], decodedData[0].location[2]}, cv::Scalar(0, 255, 0), 3);
-      std::string frameText = std::string("QRCode successfully found, gottenChunk: ") + std::to_string(decodedDataChunks.size());
-      cv::putText(frame, frameText, cv::Point(10, frame.rows/2), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255), 5);
+      else
+      {
+        cv::rectangle(frame, cv::Rect{decodedData[0].location[0], decodedData[0].location[2]}, cv::Scalar(0, 255, 255), 3);
+        std::string frameText = std::string("QRCode already exist in a chunk list: ") + std::to_string(successPacketIndexes.size());
+        cv::putText(frame, frameText, cv::Point(10, frame.rows/2), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255, 255), 5);
+      }
+      if ((successPacketIndexes.size() == header.chunksCount) &&
+          ((successPacketIndexes.size() - 1) == *successPacketIndexes.rbegin()))
+      {
+        break;
+      }
     }
 
     std::string frameText = std::string("frame: ") + std::to_string(i++);
@@ -99,27 +120,23 @@ int main(int argc, char* argv[])
 
   cv::destroyAllWindows();
 
-  auto start = 0;
-  auto end = 0;
-  for (int i = 0; i < (decodedDataChunks.size() - 1 - 1); ++i)
+  if (successPacketIndexes.empty() ||
+      ((successPacketIndexes.size() - 1) != *successPacketIndexes.rbegin()))
   {
-    if (decodedDataChunks[i].size() != decodedDataChunks[i+1].size())
-    {
-      start = i+1+1;
-      break;
-    }
+    std::cout << "Some chunks was not gotten, full list of lost chunks in missedChunks.txt" << std::endl;
+    return 1;
   }
-  for (int i = start; i < (decodedDataChunks.size() - 1); ++i)
+
+  auto file = std::ofstream(std::string(argv[1]) + "_reassembled.zip", std::ios::binary);
+  for (i = 0; i < successPacketIndexes.size(); ++i)
   {
-    if (decodedDataChunks[i].size() != decodedDataChunks[i+1].size())
-    {
-      end = i+1;
-      break;
-    }
-  }
-  for (int i = start; i <= end; ++i)
-  {
-    file.write((char const*)decodedDataChunks[i].data(), decodedDataChunks[i].size());
+    std::string fileName = std::string("./GottenChunks/") + std::to_string(i) + ".chk";
+    auto fileSize = filesize(fileName);
+    auto fileChunk = std::ifstream(fileName, std::ios::binary);
+    std::vector<uint8_t> chunkData(fileSize);
+    fileChunk.read((char*)chunkData.data(), fileSize);
+
+    file.write((const char*)chunkData.data(), fileSize);
   }
   return 0;
 }
