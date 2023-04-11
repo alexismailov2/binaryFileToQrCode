@@ -53,11 +53,11 @@ jobs:
           name: Ubuntu-BinnaryFileToQrCodeGUI
           path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
        
-  build-ubuntu18_04:
+  build-ubuntu20_04:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
 
     steps:
     - uses: actions/checkout@v3
@@ -80,17 +80,17 @@ jobs:
     - name: Upload ASCIIDataDecoder
       uses: actions/upload-artifact@v3
       with:
-          name: Ubuntu18_04-ASCIIDataDecoder
+          name: Ubuntu20_04-ASCIIDataDecoder
           path: ${{github.workspace}}/build/ASCIIDataDecoder
 
     - name: Upload ASCIIDataEncoder
       uses: actions/upload-artifact@v3
       with:
-          name: Ubuntu18_04-ASCIIDataEncoder
+          name: Ubuntu20_04-ASCIIDataEncoder
           path: ${{github.workspace}}/build/ASCIIDataEncoder
 
     - name: Upload BinnaryFileToQrCodeGUI
       uses: actions/upload-artifact@v3
       with:
-          name: Ubuntu18_04-BinnaryFileToQrCodeGUI
+          name: Ubuntu20_04-BinnaryFileToQrCodeGUI
           path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
