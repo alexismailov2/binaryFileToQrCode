@@ -53,17 +53,17 @@ jobs:
           name: Ubuntu-BinnaryFileToQrCodeGUI
           path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
        
-  build-ubuntu20_04:
+  build-macos12:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: ubuntu-20.04
+    runs-on: macos-latest
 
     steps:
     - uses: actions/checkout@v3
 
     - name: Preinstall
-      run: sudo apt install -y libzbar-dev libopencv-dev qtbase5-dev
+      run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && brew install -y libzbar-dev libopencv-dev qtbase5-dev
 
     - name: Submodules update
       run: git submodule update --init --recursive
@@ -80,17 +80,17 @@ jobs:
     - name: Upload ASCIIDataDecoder
       uses: actions/upload-artifact@v3
       with:
-          name: Ubuntu20_04-ASCIIDataDecoder
+          name: Macos-ASCIIDataDecoder
           path: ${{github.workspace}}/build/ASCIIDataDecoder
 
     - name: Upload ASCIIDataEncoder
       uses: actions/upload-artifact@v3
       with:
-          name: Ubuntu20_04-ASCIIDataEncoder
+          name: Macos-ASCIIDataEncoder
           path: ${{github.workspace}}/build/ASCIIDataEncoder
 
     - name: Upload BinnaryFileToQrCodeGUI
       uses: actions/upload-artifact@v3
       with:
-          name: Ubuntu20_04-BinnaryFileToQrCodeGUI
+          name: Macos-BinnaryFileToQrCodeGUI
           path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
