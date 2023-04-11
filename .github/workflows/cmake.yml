@@ -53,11 +53,11 @@ jobs:
           name: Ubuntu-BinnaryFileToQrCodeGUI
           path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
        
-  build-redhat8:
+  build-centos7:
     # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
     # You can convert this to a matrix build if you need cross-platform coverage.
     # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-    runs-on: dgianno/rhel8
+    runs-on: spack/centos7
 
     steps:
     - uses: actions/checkout@v3
@@ -80,18 +80,18 @@ jobs:
     - name: Upload ASCIIDataDecoder
       uses: actions/upload-artifact@v3
       with:
-          name: RedHat8-ASCIIDataDecoder
+          name: Centos7-ASCIIDataDecoder
           path: ${{github.workspace}}/build/ASCIIDataDecoder
 
     - name: Upload ASCIIDataEncoder
       uses: actions/upload-artifact@v3
       with:
-          name: RedHat8-ASCIIDataEncoder
+          name: Centos7-ASCIIDataEncoder
           path: ${{github.workspace}}/build/ASCIIDataEncoder
 
     - name: Upload BinnaryFileToQrCodeGUI
       uses: actions/upload-artifact@v3
       with:
-          name: RedHat8-BinnaryFileToQrCodeGUI
+          name: Centos7-BinnaryFileToQrCodeGUI
           path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
 
