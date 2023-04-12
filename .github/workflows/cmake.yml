@@ -63,7 +63,7 @@ jobs:
     - uses: actions/checkout@v3
 
     - name: Preinstall
-      run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && brew install zbar opencv qt@5
+      run: /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)" && brew link --overwrite python@3.11 && brew install zbar opencv qt@5
 
     - name: Submodules update
       run: git submodule update --init --recursive
