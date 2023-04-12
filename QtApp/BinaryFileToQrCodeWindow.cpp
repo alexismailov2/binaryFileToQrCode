@@ -203,6 +203,14 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
     _framerateMs = 1000/value;
   });
 
+  auto qrCountSpinBox = new QSpinBox;
+  qrCountSpinBox->setRange(1, 4);
+  qrCountSpinBox->setSuffix(tr(" qr codes"));
+  qrCountSpinBox->setValue(_qrCount);
+  connect(qrCountSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+    _qrCount = value;
+  });
+
   auto generateButton = new QPushButton(tr("Run generating"));
 
   auto layoutConfig = new QVBoxLayout;
@@ -211,6 +219,7 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
   layoutConfig->addWidget(scaleSpinBox);
   layoutConfig->addWidget(repeatCountSpinBox);
   layoutConfig->addWidget(frameSpinBox);
+  layoutConfig->addWidget(qrCountSpinBox);
   layoutConfig->addWidget(generateButton);
 
   _mainWidget = new QWidget;
@@ -218,11 +227,11 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
 
   _mainWidget->setLayout(layoutConfig);
 
-  connect(generateButton, &QPushButton::clicked, [=]() { generate(); });
+  connect(generateButton, &QPushButton::clicked, [=]() { generate(_qrCount); });
   return generateButton;
 }
 
-auto BinaryFileToQrCodeWindow::generatorLayout() -> QLabel*
+auto BinaryFileToQrCodeWindow::generatorLayout(size_t pictureCount) -> std::vector<QLabel*>
 {
   if (_mainWidget)
   {
@@ -230,23 +239,28 @@ auto BinaryFileToQrCodeWindow::generatorLayout() -> QLabel*
     delete _mainWidget;
   }
 
-  auto pictureLabel = new QLabel();
+  auto layoutGenerate = new QHBoxLayout;
 
-  auto layoutGenerate = new QVBoxLayout;
-  layoutGenerate->addWidget(pictureLabel);
+  std::vector<QLabel*> pictureLabels(pictureCount);
+  for(auto& item : pictureLabels)
+  {
+    item = new QLabel();
+    layoutGenerate->addWidget(item);
+  }
 
   _mainWidget = new QWidget;
   setCentralWidget(_mainWidget);
   _mainWidget->setLayout(layoutGenerate);
-  return pictureLabel;
+  return pictureLabels;
 }
 
-void  BinaryFileToQrCodeWindow::generate()
+void  BinaryFileToQrCodeWindow::generate(size_t countPictures)
 {
-  auto pictureLabel = generatorLayout();
+  auto pictureLabels = generatorLayout(countPictures);
 
   for(int repeatLoop = 0; repeatLoop < _repeatCount; ++repeatLoop)
   {
+    auto counter = 0;
     encodeBinaryFileToQRCodes(_selectedFile, [&](std::vector<uint8_t>& qrMat, std::vector<uint8_t> const& chunkData) {
       auto size = (int)sqrt(qrMat.size());
 #ifdef BUILD_WITH_ZBar
@@ -268,10 +282,17 @@ void  BinaryFileToQrCodeWindow::generate()
                           size,
                           size,
                           QImage::Format_Grayscale8).scaled(size * _scale, size * _scale, Qt::KeepAspectRatio);
-      pictureLabel->setPixmap(QPixmap::fromImage(image));
-      QCoreApplication::processEvents();
-      std::this_thread::sleep_for(std::chrono::milliseconds(_framerateMs));
+      auto pictureLabelIndex = (counter < countPictures) ? counter : (counter % countPictures);
+      pictureLabels[pictureLabelIndex]->setPixmap(QPixmap::fromImage(image));
+      if (pictureLabelIndex == (countPictures - 1))
+      {
+        QCoreApplication::processEvents();
+        std::this_thread::sleep_for(std::chrono::milliseconds(_framerateMs));
+      }
+      ++counter;
     });
+    QCoreApplication::processEvents();
+    std::this_thread::sleep_for(std::chrono::milliseconds(_framerateMs));
   }
 
   configLayout();

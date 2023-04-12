@@ -2,6 +2,8 @@
 
 #include <QMainWindow>
 
+#include <vector>
+
 QT_BEGIN_NAMESPACE
 class QAction;
 class QActionGroup;
@@ -24,8 +26,8 @@ public:
                              QWidget *parent = nullptr);
     ~BinaryFileToQrCodeWindow() = default;
     auto configLayout() -> QPushButton*;
-    auto generatorLayout() -> QLabel*;
-    void generate();
+    auto generatorLayout(size_t countPictures = 1) -> std::vector<QLabel*>;
+    void generate(size_t countPictures = 1);
 
 private:
     void createActions();
@@ -41,6 +43,7 @@ private:
     uint8_t _scale{};
     uint8_t _repeatCount{};
     uint16_t _framerateMs{};
+    uint16_t _qrCount{};
     bool _testNeeded{};
     bool _isFullscreen{};
 };
