@@ -43,6 +43,7 @@ endif()
 add_executable(TestASCIIDataGenerator
         TestASCIIDataGenerator.cpp)
 
+if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 add_executable(ScreenCapturing
         ScreenCapturing.cpp)
 
@@ -51,5 +52,6 @@ target_link_libraries(ScreenCapturing
         ${OpenCV_LIBS}
         ${ZBar_LIBS}
         "-framework CoreGraphics")
+endif()
 
 add_subdirectory(QtApp)
