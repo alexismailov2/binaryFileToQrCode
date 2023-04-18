@@ -1,12 +1,12 @@
 #if BUILD_WITH_X11
+#include <opencv2/opencv.hpp>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
 #include <X11/extensions/XShm.h>
 #include <sys/ipc.h>
 #include <sys/shm.h>
-
-#include <opencv2/opencv.hpp>
 
 struct ScreenShot
 {
