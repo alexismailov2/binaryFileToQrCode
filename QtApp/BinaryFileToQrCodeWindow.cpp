@@ -204,7 +204,7 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
   });
 
   auto qrCountSpinBox = new QSpinBox;
-  qrCountSpinBox->setRange(1, 4);
+  qrCountSpinBox->setRange(1, 32);
   qrCountSpinBox->setSuffix(tr(" qr codes"));
   qrCountSpinBox->setValue(_qrCount);
   connect(qrCountSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
@@ -239,13 +239,15 @@ auto BinaryFileToQrCodeWindow::generatorLayout(size_t pictureCount) -> std::vect
     delete _mainWidget;
   }
 
-  auto layoutGenerate = new QHBoxLayout;
+  auto sqrtPictureCount = (uint32_t)std::round(sqrt(pictureCount));
+
+  auto layoutGenerate = new QGridLayout;//new QHBoxLayout;
 
   std::vector<QLabel*> pictureLabels(pictureCount);
-  for(auto& item : pictureLabels)
+  for(uint32_t i = 0; i < pictureLabels.size(); ++i)
   {
-    item = new QLabel();
-    layoutGenerate->addWidget(item);
+    pictureLabels[i] = new QLabel();
+    layoutGenerate->addWidget(pictureLabels[i], i % sqrtPictureCount, i / sqrtPictureCount);
   }
 
   _mainWidget = new QWidget;

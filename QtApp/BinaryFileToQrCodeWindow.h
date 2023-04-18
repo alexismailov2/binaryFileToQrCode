@@ -43,7 +43,7 @@ private:
     uint8_t _scale{};
     uint8_t _repeatCount{};
     uint16_t _framerateMs{};
-    uint16_t _qrCount{};
+    uint16_t _qrCount{1};
     bool _testNeeded{};
     bool _isFullscreen{};
 };

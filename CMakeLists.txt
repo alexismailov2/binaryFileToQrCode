@@ -43,4 +43,13 @@ endif()
 add_executable(TestASCIIDataGenerator
         TestASCIIDataGenerator.cpp)
 
+add_executable(ScreenCapturing
+        ScreenCapturing.cpp)
+
+target_link_libraries(ScreenCapturing
+        PRIVATE
+        ${OpenCV_LIBS}
+        ${ZBar_LIBS}
+        "-framework CoreGraphics")
+
 add_subdirectory(QtApp)
