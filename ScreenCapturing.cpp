@@ -6,6 +6,8 @@
 #include <sys/ipc.h>
 #include <sys/shm.h>
 
+#include <opencv2/opencv.hpp>
+
 struct ScreenShot
 {
   ScreenShot(cv::Rect rect)
