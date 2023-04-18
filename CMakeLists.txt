@@ -62,7 +62,7 @@ target_include_directories(ZBar_builtin
 
 target_include_directories(ZBar_builtin
         PUBLIC
-        zbar/include)
+        ${CMAKE_CURRENT_LIST_DIR}/zbar/include)
 
 target_link_libraries(ZBar_builtin
         PRIVATE
