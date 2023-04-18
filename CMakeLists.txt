@@ -116,6 +116,10 @@ else()
             ${ZBar_LIBS}
             X11
             Xext)
+
+    target_include_directories(ScreenCapturing
+            PRIVATE
+            ${CMAKE_CURRENT_LIST_DIR}/zbar/include)
 endif()
 
 add_subdirectory(QtApp)
