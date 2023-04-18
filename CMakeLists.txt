@@ -52,6 +52,17 @@ target_link_libraries(ScreenCapturing
         ${OpenCV_LIBS}
         ${ZBar_LIBS}
         "-framework CoreGraphics")
+else()
+    add_definitions(-DBUILD_WITH_X11)
+    add_executable(ScreenCapturing
+            ScreenCapturing.cpp)
+
+    target_link_libraries(ScreenCapturing
+            PRIVATE
+            ${OpenCV_LIBS}
+            ${ZBar_LIBS}
+            X11
+            Xext)
 endif()
 
 add_subdirectory(QtApp)
