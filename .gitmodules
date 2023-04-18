@@ -2,3 +2,6 @@
 	path = QR-Code-generator
 	url = https://github.com/nayuki/QR-Code-generator.git
 
+[submodule "zbar"]
+	path = zbar
+	url = https://github.com/mchehab/zbar.git
