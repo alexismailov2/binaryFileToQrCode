@@ -183,7 +183,7 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
   scaleSpinBox->setRange(1, 10);
   scaleSpinBox->setSuffix(tr(" x"));
   scaleSpinBox->setValue(_scale);
-  connect(scaleSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+  connect(scaleSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
     _scale = value;
   });
 
@@ -191,7 +191,7 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
   repeatCountSpinBox->setRange(1, 10);
   repeatCountSpinBox->setSuffix(tr(" count"));
   repeatCountSpinBox->setValue(_repeatCount);
-  connect(repeatCountSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+  connect(repeatCountSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
     _repeatCount = value;
   });
 
@@ -199,7 +199,7 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
   frameSpinBox->setRange(1, 60);
   frameSpinBox->setSuffix(tr(" frames/s"));
   frameSpinBox->setValue(1000/_framerateMs);
-  connect(frameSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+  connect(frameSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
     _framerateMs = 1000/value;
   });
 
@@ -207,7 +207,7 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
   qrCountSpinBox->setRange(1, 4);
   qrCountSpinBox->setSuffix(tr(" qr codes"));
   qrCountSpinBox->setValue(_qrCount);
-  connect(qrCountSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), [&](int value){
+  connect(qrCountSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
     _qrCount = value;
   });
 
