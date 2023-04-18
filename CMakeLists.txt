@@ -13,9 +13,43 @@ add_definitions(-DBUILD_WITH_OpenCV)
 endif()
 
 if(BUILD_WITH_ZBar)
-find_package(PkgConfig REQUIRED)
-pkg_check_modules(ZBar REQUIRED IMPORTED_TARGET zbar)
-set(ZBar_LIBS PkgConfig::ZBar)
+#find_package(PkgConfig REQUIRED)
+#pkg_check_modules(ZBar REQUIRED IMPORTED_TARGET zbar)
+#set(ZBar_LIBS PkgConfig::ZBar)
+
+add_library(ZBar_builtin
+        zbar/zbar/config.c
+        zbar/zbar/decoder.c
+        zbar/zbar/error.c
+        zbar/zbar/image.c
+        zbar/zbar/img_scanner.c
+        zbar/zbar/processor.c
+        zbar/zbar/refcnt.c
+        zbar/zbar/scanner.c
+        zbar/zbar/symbol.c
+        zbar/zbar/decoder/qr_finder.c
+        zbar/zbar/qrcode/qrdec.c
+        zbar/zbar/qrcode/qrdectxt.c
+        zbar/zbar/qrcode/rs.c
+        zbar/zbar/qrcode/isaac.c
+        zbar/zbar/qrcode/bch15_5.c
+        zbar/zbar/qrcode/binarize.c
+        zbar/zbar/qrcode/util.c)
+
+target_compile_definitions(ZBar_builtin
+        PRIVATE
+        -DHAVE_INTTYPES)
+
+target_include_directories(ZBar_builtin
+        PRIVATE
+        ${CMAKE_CURRENT_LIST_DIR}
+        zbar/zbar)
+
+target_include_directories(ZBar_builtin
+        PUBLIC
+        zbar/include)
+
+set(ZBar_LIBS ZBar_builtin)
 endif()
 
 if(BUILD_WITH_OpenCV)
