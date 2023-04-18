@@ -16,6 +16,7 @@ if(BUILD_WITH_ZBar)
 #find_package(PkgConfig REQUIRED)
 #pkg_check_modules(ZBar REQUIRED IMPORTED_TARGET zbar)
 #set(ZBar_LIBS PkgConfig::ZBar)
+find_package(Iconv REQUIRED)
 
 add_library(ZBar_builtin
         zbar/zbar/config.c
@@ -28,6 +29,15 @@ add_library(ZBar_builtin
         zbar/zbar/scanner.c
         zbar/zbar/symbol.c
         zbar/zbar/decoder/qr_finder.c
+        zbar/zbar/decoder/codabar.c
+        zbar/zbar/decoder/code93.c
+        zbar/zbar/decoder/code39.c
+        zbar/zbar/decoder/code128.c
+        zbar/zbar/decoder/databar.c
+        zbar/zbar/decoder/ean.c
+        zbar/zbar/decoder/i25.c
+        zbar/zbar/decoder/pdf417.c
+        #zbar/zbar/decoder/sq_finder.c
         zbar/zbar/qrcode/qrdec.c
         zbar/zbar/qrcode/qrdectxt.c
         zbar/zbar/qrcode/rs.c
@@ -38,16 +48,25 @@ add_library(ZBar_builtin
 
 target_compile_definitions(ZBar_builtin
         PRIVATE
-        -DHAVE_INTTYPES)
+        -DHAVE_INTTYPES
+        -DHAVE_TIME)
+
+message(STATUS "Iconv_INCLUDE_DIRS=${Iconv_INCLUDE_DIRS}")
+message(STATUS "Iconv_LIBRARIES=${Iconv_LIBRARIES}")
 
 target_include_directories(ZBar_builtin
         PRIVATE
         ${CMAKE_CURRENT_LIST_DIR}
+        ${Iconv_INCLUDE_DIRS}
         zbar/zbar)
 
 target_include_directories(ZBar_builtin
         PUBLIC
         zbar/include)
+
+target_link_libraries(ZBar_builtin
+        PRIVATE
+        ${Iconv_LIBRARIES})
 
 set(ZBar_LIBS ZBar_builtin)
 endif()

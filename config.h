@@ -284,8 +284,9 @@
 #define ZBAR_VERSION_MAJOR 0
 
 /* Program minor version (after '.') as a number */
-#define ZBAR_VERSION_MINOR 10
+#define ZBAR_VERSION_MINOR 23
 
+#define ZBAR_VERSION_PATCH 92
 /* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
    <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
    #define below would cause a syntax error. */
