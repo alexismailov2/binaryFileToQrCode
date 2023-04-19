@@ -96,6 +96,7 @@ endif()
 add_executable(TestASCIIDataGenerator
         TestASCIIDataGenerator.cpp)
 
+if(BUILD_WITH_OpenCV AND BUILD_WITH_ZBar)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
 add_executable(ScreenCapturing
         ScreenCapturing.cpp)
@@ -120,6 +121,7 @@ else()
     target_include_directories(ScreenCapturing
             PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}/zbar/include)
+endif()
 endif()
 
 add_subdirectory(QtApp)
