@@ -14,39 +14,118 @@ struct ScreenShot
     : rect(rect)
   {
     display = XOpenDisplay(nullptr);
+    if (!display)
+    {
+      std::std::runtime_error("Display not gotten");
+    }
     root = DefaultRootWindow(display);
+    if (!root)
+    {
+      std::std::runtime_error("DefaultRootWindow");
+    }
+    if (XGetWindowAttributes(display, root, &window_attributes)  == 0)
+    {
+        std::std::runtime_error("window might not be valid any more");
+    }
+    std::cout << "window_attributes.width: " << window_attributes.width << std::endl;
+    std::cout << "window_attributes.height: " << window_attributes.height << std::endl;
 
-    XGetWindowAttributes(display, root, &window_attributes);
-    Screen* screen = window_attributes.screen;
-    ximg = XShmCreateImage(display, DefaultVisualOfScreen(screen), DefaultDepthOfScreen(screen), ZPixmap, NULL, &shminfo, rect.width, rect.height);
+    int scr = XDefaultScreen(display);
 
-    shminfo.shmid = shmget(IPC_PRIVATE, ximg->bytes_per_line * ximg->height, IPC_CREAT|0777);
-    shminfo.shmaddr = ximg->data = (char*)shmat(shminfo.shmid, 0, 0);
-    shminfo.readOnly = False;
+    shminfo = std::make_unique<XShmSegmentInfo>();
+
+    ximg = XShmCreateImage(display,
+                           DefaultVisual(display, scr),
+                           DefaultDepth(display, scr),
+                           ZPixmap,
+                           NULL,
+                           shminfo.get(),
+                           window_attributes.width,//Width(SelectedMonitor),
+                           window_attributes.height);//Height(SelectedMonitor));
+    shminfo->shmid = shmget(IPC_PRIVATE, ximg->bytes_per_line * ximg->height, IPC_CREAT | 0777);
+    shminfo->shmaddr = ximg->data = (char*)shmat(shminfo->shmid, 0, 0);
+    shminfo->readOnly = False;
     if(shminfo.shmid < 0)
     {
       throw std::runtime_error("Fatal shminfo error!");
     }
-    Status s1 = XShmAttach(display, &shminfo);
+    Status s1 = XShmAttach(SelectedDisplay, shminfo.get());
     if (!s1)
     {
       throw std::runtime_error("XShmAttach() failure!");
     }
+//    root = DefaultRootWindow(display);
+//
+//    if (XGetWindowAttributes(display, root, &window_attributes)  == 0)
+//    {
+//        std::std::runtime_error("window might not be valid any more");
+//    }
+//    std::cout << "window_attributes.width: " << window_attributes.width << std::endl;
+//    std::cout << "window_attributes.height: " << window_attributes.height << std::endl;
+//
+//    Screen* screen = window_attributes.screen;
+//    ximg = XShmCreateImage(display,
+//                           DefaultVisualOfScreen(screen),
+//                           DefaultDepthOfScreen(screen),
+//                           ZPixmap,
+//                           NULL,
+//                           &shminfo,
+//                           window_attributes.width,
+//                           window_attributes.height);
+//
+//    shminfo.shmid = shmget(IPC_PRIVATE, ximg->bytes_per_line * ximg->height, IPC_CREAT|0777);
+//    shminfo.shmaddr = ximg->data = (char*)shmat(shminfo.shmid, 0, 0);
+//    shminfo.readOnly = False;
+//    if(shminfo.shmid < 0)
+//    {
+//      throw std::runtime_error("Fatal shminfo error!");
+//    }
+//    Status s1 = XShmAttach(display, &shminfo);
+//    if (!s1)
+//    {
+//      throw std::runtime_error("XShmAttach() failure!");
+//    }
   }
 
   void operator() (cv::Mat& cv_img)
   {
-    XShmGetImage(display, root, ximg, 0, 0, 0x00ffffff);
+    if(!XShmGetImage(display,
+                     RootWindow(display, DefaultScreen(SelectedDisplay)),
+                     ximg,
+                     0,//OffsetX(SelectedMonitor),
+                     0,//OffsetY(SelectedMonitor),
+                     AllPlanes))
+    {
+      throw std::runtime_error("XShmGetImage() failure!");
+    }
+    //ProcessCapture(Data->ScreenCaptureData, *this, SelectedMonitor, (unsigned char*)XImage_->data, XImage_->bytes_per_line);
+    //return Ret;
+    //XShmGetImage(display, root, ximg, 0, 0, 0x00ffffff);
     cv_img = cv::Mat(rect.height, rect.width, CV_8UC4, ximg->data);
     cv::cvtColor(cv_img, cv_img, cv::COLOR_BGRA2GRAY);
   }
 
   ~ScreenShot()
   {
-    XDestroyImage(ximg);
-    XShmDetach(display, &shminfo);
-    shmdt(shminfo.shmaddr);
-    XCloseDisplay(display);
+    if(shminfo)
+    {
+      shmdt(shminfo->shmaddr);
+      shmctl(shminfo->shmid, IPC_RMID, 0);
+      XShmDetach(display, shminfo.get());
+    }
+    if(ximg)
+    {
+      XDestroyImage(ximg);
+    }
+    if(display)
+    {
+      XCloseDisplay(display);
+    }
+//
+//    XDestroyImage(ximg);
+//    XShmDetach(display, &shminfo);
+//    shmdt(shminfo.shmaddr);
+//    XCloseDisplay(display);
   }
 
   Display* display{};
