@@ -83,15 +83,15 @@ target_link_libraries(ASCIIDataEncoder
         ${ZBar_LIBS})
 endif()
 
-if(BUILD_WITH_OpenCV AND BUILD_WITH_ZBar)
-add_executable(ASCIIDataDecoder
-        ASCIIDataDecoder.cpp)
-
-target_link_libraries(ASCIIDataDecoder
-        PRIVATE
-        ${OpenCV_LIBS}
-        ${ZBar_LIBS})
-endif()
+#if(BUILD_WITH_OpenCV AND BUILD_WITH_ZBar)
+#add_executable(ASCIIDataDecoder
+#        ASCIIDataDecoder.cpp)
+#
+#target_link_libraries(ASCIIDataDecoder
+#        PRIVATE
+#        ${OpenCV_LIBS}
+#        ${ZBar_LIBS})
+#endif()
 
 add_executable(TestASCIIDataGenerator
         TestASCIIDataGenerator.cpp)

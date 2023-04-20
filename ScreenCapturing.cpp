@@ -281,6 +281,7 @@ int main(int argc, char* argv[])
 //                        cv::Size(static_cast<int32_t>(cropRoi.width),
 //                                 static_cast<int32_t>(cropRoi.height)));
 
+  auto gottenChunksFile = std::ofstream("./gottenChunks.txt");
   while (cv::waitKey(1) < 0)
   {
     //TAKEN_TIME();
@@ -314,6 +315,7 @@ int main(int argc, char* argv[])
         if (!successPacketIndexes.count(header.chunkId))
         {
           auto outFile = std::ofstream(std::string("./GottenChunks/") + std::to_string(header.chunkId) + ".chk", std::ios::binary);
+          gottenChunksFile << std::to_string(header.chunkId) << std::endl;
           outFile.write((char const*)decodedData[j].data.data() + sizeof(Header), decodedData[j].data.size() - sizeof(Header));
           successPacketIndexes.insert(header.chunkId);
 
@@ -349,7 +351,7 @@ int main(int argc, char* argv[])
   if (successPacketIndexes.empty() ||
       ((successPacketIndexes.size() - 1) != *successPacketIndexes.rbegin()))
   {
-    std::cout << "Some chunks was not gotten, full list of lost chunks in missedChunks.txt" << std::endl;
+    std::cout << "Some chunks was not gotten, full list of gotten chunks in gottenChunks.txt" << std::endl;
     return 1;
   }
 
