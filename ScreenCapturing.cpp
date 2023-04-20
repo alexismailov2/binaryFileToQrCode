@@ -1,6 +1,8 @@
 #if BUILD_WITH_X11
 #include <opencv2/opencv.hpp>
 
+#include <memory>
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
@@ -16,23 +18,23 @@ struct ScreenShot
     display = XOpenDisplay(nullptr);
     if (!display)
     {
-      std::std::runtime_error("Display not gotten");
+      std::runtime_error("Display not gotten");
     }
     root = DefaultRootWindow(display);
     if (!root)
     {
-      std::std::runtime_error("DefaultRootWindow");
+      std::runtime_error("DefaultRootWindow");
     }
     if (XGetWindowAttributes(display, root, &window_attributes)  == 0)
     {
-        std::std::runtime_error("window might not be valid any more");
+        std::runtime_error("window might not be valid any more");
     }
     std::cout << "window_attributes.width: " << window_attributes.width << std::endl;
     std::cout << "window_attributes.height: " << window_attributes.height << std::endl;
 
     int scr = XDefaultScreen(display);
 
-    shminfo = std::make_unique<XShmSegmentInfo>();
+    shminfo = std::make_shared<XShmSegmentInfo>();
 
     ximg = XShmCreateImage(display,
                            DefaultVisual(display, scr),
@@ -45,11 +47,11 @@ struct ScreenShot
     shminfo->shmid = shmget(IPC_PRIVATE, ximg->bytes_per_line * ximg->height, IPC_CREAT | 0777);
     shminfo->shmaddr = ximg->data = (char*)shmat(shminfo->shmid, 0, 0);
     shminfo->readOnly = False;
-    if(shminfo.shmid < 0)
+    if(shminfo->shmid < 0)
     {
       throw std::runtime_error("Fatal shminfo error!");
     }
-    Status s1 = XShmAttach(SelectedDisplay, shminfo.get());
+    Status s1 = XShmAttach(display, shminfo.get());
     if (!s1)
     {
       throw std::runtime_error("XShmAttach() failure!");
@@ -90,7 +92,7 @@ struct ScreenShot
   void operator() (cv::Mat& cv_img)
   {
     if(!XShmGetImage(display,
-                     RootWindow(display, DefaultScreen(SelectedDisplay)),
+                     RootWindow(display, DefaultScreen(display)),
                      ximg,
                      0,//OffsetX(SelectedMonitor),
                      0,//OffsetY(SelectedMonitor),
@@ -101,7 +103,7 @@ struct ScreenShot
     //ProcessCapture(Data->ScreenCaptureData, *this, SelectedMonitor, (unsigned char*)XImage_->data, XImage_->bytes_per_line);
     //return Ret;
     //XShmGetImage(display, root, ximg, 0, 0, 0x00ffffff);
-    cv_img = cv::Mat(rect.height, rect.width, CV_8UC4, ximg->data);
+    cv_img = cv::Mat(window_attributes.height, window_attributes.width, CV_8UC4, ximg->data);
     cv::cvtColor(cv_img, cv_img, cv::COLOR_BGRA2GRAY);
   }
 
@@ -132,7 +134,7 @@ struct ScreenShot
   Window root;
   XWindowAttributes window_attributes;
   XImage* ximg{};
-  XShmSegmentInfo shminfo;
+  std::shared_ptr<XShmSegmentInfo> shminfo;
 
   cv::Rect rect;
 };
