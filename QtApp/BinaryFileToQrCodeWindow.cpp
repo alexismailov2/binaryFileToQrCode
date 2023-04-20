@@ -28,7 +28,8 @@ size_t filesize(std::string const &filename)
   return in.tellg();
 }
 
-void binaryFileReadingByChunk(std::string const &filePath,
+void binaryFileReadingByChunk(std::string const& filePath,
+                              std::vector<uint32_t> const& indexes,
                               size_t chunkFileSize,
                               std::function<void(std::vector<uint8_t> const &chunkData)> &&cb)
 {
@@ -49,7 +50,10 @@ void binaryFileReadingByChunk(std::string const &filePath,
     header.payloadSize = chunkSize;
     memcpy(dataFromFile.data(), &header, sizeof(Header));
     file.read((char *) dataFromFile.data() + sizeof(Header), chunkSize);
-    cb(dataFromFile);
+    if (!std::binary_search(indexes.cbegin(), indexes.cend(), header.chunkId))
+    {
+      cb(dataFromFile);
+    }
     fileRead += chunkSize;
   }
 }
@@ -69,11 +73,12 @@ auto qrToVector(qrcodegen::QrCode const &qr, int border = 4) -> std::vector<uint
   return output;
 }
 
-void encodeBinaryFileToQRCodes(std::string const &inputFilePath,
-                               std::function<void(std::vector<uint8_t> &qrMat, std::vector<uint8_t> const &chunkData)> &&cb)
+void encodeBinaryFileToQRCodes(std::string const& inputFilePath,
+                               std::vector<uint32_t> const& indexes,
+                               std::function<void(std::vector<uint8_t>& qrMat, std::vector<uint8_t> const& chunkData)>&& cb)
 {
   TAKEN_TIME();
-  binaryFileReadingByChunk(inputFilePath, 2048, [&](std::vector<uint8_t> const &chunkData) {
+  binaryFileReadingByChunk(inputFilePath, indexes, 2048, [&](std::vector<uint8_t> const &chunkData) {
     auto const qr = qrcodegen::QrCode::encodeBinary(chunkData, qrcodegen::QrCode::Ecc::LOW);
     auto qrMat = qrToVector(qr);
     cb(qrMat, chunkData);
@@ -156,6 +161,26 @@ auto decode(uint8_t const* data, size_t cols, size_t rows) -> std::vector<Decode
 //}
 #endif
 
+auto readIndexes(std::string const& filename) -> std::vector<uint32_t>
+{
+  if (filename.empty())
+  {
+    return {};
+  }
+  std::vector<uint32_t> indexes;
+  std::string index;
+  auto fileWithClasses{std::ifstream(filename)};
+  while (std::getline(fileWithClasses, index))
+  {
+    if (!index.empty())
+    {
+      indexes.push_back(std::atoi(index.c_str()));
+    }
+  }
+  std::sort(indexes.begin(), indexes.end());
+  return indexes;
+}
+
 } // anonymous
 
 auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
@@ -176,6 +201,20 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
     {
       selectFileLabel->setText(file);
       _selectedFile = file.toStdString();
+    }
+  });
+
+  auto selectIndexFileLabel = new QLabel(QString::fromStdString(_selectedIndexFile));
+  auto selectIndexFileButton = new QPushButton(tr("Select index data file(*.*)"));
+  connect(selectIndexFileButton, &QPushButton::clicked, [=]() {
+    QString file = QDir::toNativeSeparators(QFileDialog::getOpenFileName(this,
+                                                                         tr("Open index file"),
+                                                                         QDir::currentPath()));
+    if (!file.isEmpty())
+    {
+      selectIndexFileLabel->setText(file);
+      _selectedIndexFile = file.toStdString();
+      _indexes = readIndexes(_selectedIndexFile);
     }
   });
 
@@ -203,12 +242,20 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
     _framerateMs = 1000/value;
   });
 
-  auto qrCountSpinBox = new QSpinBox;
-  qrCountSpinBox->setRange(1, 4);
-  qrCountSpinBox->setSuffix(tr(" qr codes"));
-  qrCountSpinBox->setValue(_qrCount);
-  connect(qrCountSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
-    _qrCount = value;
+  auto qrCountHSpinBox = new QSpinBox;
+  qrCountHSpinBox->setRange(1, 32);
+  qrCountHSpinBox->setSuffix(tr(" horizontal count"));
+  qrCountHSpinBox->setValue(_qrCountH);
+  connect(qrCountHSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+    _qrCountH = value;
+  });
+
+  auto qrCountVSpinBox = new QSpinBox;
+  qrCountVSpinBox->setRange(1, 32);
+  qrCountVSpinBox->setSuffix(tr(" vertical count"));
+  qrCountVSpinBox->setValue(_qrCountV);
+  connect(qrCountVSpinBox, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), [&](int value){
+    _qrCountV = value;
   });
 
   auto generateButton = new QPushButton(tr("Run generating"));
@@ -216,10 +263,13 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
   auto layoutConfig = new QVBoxLayout;
   layoutConfig->addWidget(selectFileLabel);
   layoutConfig->addWidget(selectFileButton);
+  layoutConfig->addWidget(selectIndexFileLabel);
+  layoutConfig->addWidget(selectIndexFileButton);
   layoutConfig->addWidget(scaleSpinBox);
   layoutConfig->addWidget(repeatCountSpinBox);
   layoutConfig->addWidget(frameSpinBox);
-  layoutConfig->addWidget(qrCountSpinBox);
+  layoutConfig->addWidget(qrCountHSpinBox);
+  layoutConfig->addWidget(qrCountVSpinBox);
   layoutConfig->addWidget(generateButton);
 
   _mainWidget = new QWidget;
@@ -227,11 +277,11 @@ auto BinaryFileToQrCodeWindow::configLayout() -> QPushButton*
 
   _mainWidget->setLayout(layoutConfig);
 
-  connect(generateButton, &QPushButton::clicked, [=]() { generate(_qrCount); });
+  connect(generateButton, &QPushButton::clicked, [=]() { generate(_qrCountH, _qrCountV); });
   return generateButton;
 }
 
-auto BinaryFileToQrCodeWindow::generatorLayout(size_t pictureCount) -> std::vector<QLabel*>
+auto BinaryFileToQrCodeWindow::generatorLayout(size_t cols, size_t rows) -> std::vector<QLabel*>
 {
   if (_mainWidget)
   {
@@ -239,13 +289,16 @@ auto BinaryFileToQrCodeWindow::generatorLayout(size_t pictureCount) -> std::vect
     delete _mainWidget;
   }
 
-  auto layoutGenerate = new QHBoxLayout;
+  auto layoutGenerate = new QGridLayout;
 
-  std::vector<QLabel*> pictureLabels(pictureCount);
-  for(auto& item : pictureLabels)
+  std::vector<QLabel*> pictureLabels(cols * rows);
+  for(uint32_t j = 0; j < cols; ++j)
   {
-    item = new QLabel();
-    layoutGenerate->addWidget(item);
+    for (uint32_t i = 0; i < rows; ++i)
+    {
+      pictureLabels[j * rows + i] = new QLabel();
+      layoutGenerate->addWidget(pictureLabels[j * rows + i], i, j);
+    }
   }
 
   _mainWidget = new QWidget;
@@ -254,14 +307,15 @@ auto BinaryFileToQrCodeWindow::generatorLayout(size_t pictureCount) -> std::vect
   return pictureLabels;
 }
 
-void  BinaryFileToQrCodeWindow::generate(size_t countPictures)
+void BinaryFileToQrCodeWindow::generate(size_t cols, size_t rows)
 {
-  auto pictureLabels = generatorLayout(countPictures);
+  auto pictureLabels = generatorLayout(cols, rows);
 
+  auto const countPictures = cols * rows;
   for(int repeatLoop = 0; repeatLoop < _repeatCount; ++repeatLoop)
   {
     auto counter = 0;
-    encodeBinaryFileToQRCodes(_selectedFile, [&](std::vector<uint8_t>& qrMat, std::vector<uint8_t> const& chunkData) {
+    encodeBinaryFileToQRCodes(_selectedFile, _indexes, [&](std::vector<uint8_t>& qrMat, std::vector<uint8_t> const& chunkData) {
       auto size = (int)sqrt(qrMat.size());
 #ifdef BUILD_WITH_ZBar
       if (_testNeeded)
@@ -299,6 +353,7 @@ void  BinaryFileToQrCodeWindow::generate(size_t countPictures)
 }
 
 BinaryFileToQrCodeWindow::BinaryFileToQrCodeWindow(std::string selectedFile,
+                                                   std::string selectedIndexFile,
                                                    uint8_t scale,
                                                    uint8_t repeatCount,
                                                    uint16_t framerateMs,
@@ -312,13 +367,14 @@ BinaryFileToQrCodeWindow::BinaryFileToQrCodeWindow(std::string selectedFile,
     , _framerateMs{framerateMs}
     , _testNeeded{testNeeded}
     , _isFullscreen{isFullscreen}
+    , _indexes{readIndexes(selectedIndexFile)}
 {
     configLayout();
 
     createActions();
     createMenus();
 
-    setWindowTitle(tr("Binary file to Qr code tool"));
+    setWindowTitle(tr("Generator tool"));
 }
 
 void BinaryFileToQrCodeWindow::createActions()
@@ -331,7 +387,7 @@ void BinaryFileToQrCodeWindow::createActions()
     aboutAct = new QAction(tr("&About"), this);
     aboutAct->setStatusTip(tr("Show the application's About box"));
     connect(aboutAct, &QAction::triggered, [this]() {
-        QMessageBox::about(this, tr("About OIYolo"), tr("The <b>OIYolo</b> Demonstrates usage of OIYolo helpers."));
+        QMessageBox::about(this, tr("About Generator"), tr("The <b>Generator</b>."));
     });
 
     aboutQtAct = new QAction(tr("About &Qt"), this);
