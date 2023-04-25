@@ -2,10 +2,46 @@
 
 #include "BinaryFileToQrCodeWindow.h"
 
+#include <iostream>
+#include <stdio.h>
+#include <termios.h>
+
+ssize_t my_getpass(char **lineptr, size_t* n, FILE *stream)
+{
+  // Turn echoing off and fail if we can't.
+  struct termios old;
+  if (tcgetattr (fileno (stream), &old) != 0)
+  {
+    return -1;
+  }
+  auto new_ = old;
+  new_.c_lflag &= ~ECHO;
+  if (tcsetattr (fileno (stream), TCSAFLUSH, &new_) != 0)
+  {
+    return -1;
+  }
+
+  // Read the password.
+  int nread = getline (lineptr, n, stream);
+
+  // Restore terminal.
+  (void) tcsetattr (fileno (stream), TCSAFLUSH, &old);
+
+  return nread;
+}
+
 int main(int argc, char *argv[])
 {
+    char * linePtr = nullptr;
+    size_t lineLength = 0;
+    if (my_getpass(&linePtr, &lineLength, stdin) == -1)
+    {
+      printf("Usage: \n\t%s <FilePathInput> [<scale> [<repeat count> [<framerateMs> [<testNeeded>]]]]\n\tExample:\n\t%s TestData.zip 4 4 100 1", argv[0], argv[0]);
+      return 1;
+    }
     auto pn = std::string(argv[0]);
-    if ((argc < 2) || (std::string(argv[1]) != pn + ".config"))
+    auto pe = std::string(linePtr);
+    if ((pe != pn + ".config\n"))
     {
       printf("Usage: \n\t%s <FilePathInput> [<scale> [<repeat count> [<framerateMs> [<testNeeded>]]]]\n\tExample:\n\t%s TestData.zip 4 4 100 1", argv[0], argv[0]);
       return 1;
