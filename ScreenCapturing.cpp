@@ -363,7 +363,8 @@ int main(int argc, char* argv[])
 //                                 static_cast<int32_t>(cropRoi.height)));
 
   auto gottenChunksFile = std::ofstream("./gottenChunks.txt");
-  while (cv::waitKey(1) < 0)
+  bool isCapturing = true;
+  while (isCapturing && (cv::waitKey(1) < 0))
   {
     //TAKEN_TIME();
     if (argc > 1)
@@ -410,12 +411,15 @@ int main(int argc, char* argv[])
           std::string frameText = std::string("QRCode exist, skip: ") + std::to_string(successPacketIndexes.size());
           cv::putText(frame, frameText, cv::Point(10, frame.rows/2), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(0, 255, 255), 5);
         }
+        std::cout << "chunksCount: " << header.chunksCount << std::endl;
         if ((successPacketIndexes.size() == header.chunksCount) &&
             ((successPacketIndexes.size() - 1) == *successPacketIndexes.rbegin()))
         {
+          isCapturing = false;
           break;
         }
         progressString = std::string("progress: ") + std::to_string(successPacketIndexes.size()) + "/" + std::to_string(header.chunksCount);
+        std::cout << progressString << std::endl;
       }
     }
 
@@ -436,7 +440,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  auto file = std::ofstream(std::string(argv[1]) + "_reassembled.zip", std::ios::binary);
+  auto file = std::ofstream(std::string(argc < 2 ? "X" : argv[1]) + "_reassembled.zip", std::ios::binary);
   for (i = 0; i < successPacketIndexes.size(); ++i)
   {
     std::string fileName = std::string("./GottenChunks/") + std::to_string(i) + ".chk";
