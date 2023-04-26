@@ -338,39 +338,6 @@ int main(int argc, char* argv[])
   cv::Rect detectedRegionOfInterest;
   auto i = 0;
 
-#if 0
-  auto initFrame = ScreenCapturingCropped();
-  cv::Rect cropRoi = cv::Rect(initFrame.cols/2/2, 200/2, (initFrame.cols/2 - 100)/2, (initFrame.rows - 400)/2);
-  while (cv::waitKey(1) < 0)
-  {
-    frame = ScreenCapturingCropped(/*cropRoi*/);
-    if (frame.empty() || (cv::waitKey(1) == 27))
-    {
-      break;
-    }
-    //qrMat = frame;//(cropRoi);
-    //cv::imshow("testGray", qrMat);
-    //cv::waitKey(10);
-    auto decodedData = decode(frame);
-    if(decodedData.size() >= 1)
-    {
-      for (auto const& item : decodedData)
-      {
-        detectedRegionOfInterest |= cv::Rect{decodedData[0].location[0], decodedData[0].location[2]};
-      }
-      break;
-    }
-  }
-//  cv::cvtColor(frame, frame, cv::COLOR_GRAY2BGR);
-//  cv::rectangle(frame, detectedRegionOfInterest, cv::Scalar(0, 255, 0), 3);
-//  cv::imshow("testGray", frame);
-//  cv::waitKey(10);
-  if (detectedRegionOfInterest.empty())
-  {
-    return 1;
-  }
-  cv::destroyAllWindows();
-#endif
 //  cv::VideoWriter video("outDecodingProcess.avi",
 //                        cv::VideoWriter::fourcc('M','J','P','G'),
 //                        10,
