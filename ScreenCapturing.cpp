@@ -201,38 +201,6 @@ cv::Mat cvMatWithGrayImage(CGImageRef imageRef)
   return cvMat;
 }
 
-//cv::Mat cvMatWithImage(CGImageRef image)
-//{
-//  CGColorSpaceRef colorSpace = CGImageGetColorSpace(image);
-//  size_t numberOfComponents = CGColorSpaceGetNumberOfComponents(colorSpace);
-//  CGFloat cols = image.size.width;
-//  CGFloat rows = image.size.height;
-//  CGImageGetBytesPerRow(image);
-//
-//  cv::Mat cvMat(rows, cols, CV_8UC4); // 8 bits per component, 4 channels
-//  CGBitmapInfo bitmapInfo = kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault;
-//
-//  // check whether the UIImage is greyscale already
-//  if (numberOfComponents == 1)
-//  {
-//    cvMat = cv::Mat(rows, cols, CV_8UC1); // 8 bits per component, 1 channels
-//    bitmapInfo = kCGImageAlphaNone | kCGBitmapByteOrderDefault;
-//  }
-//
-//  CGContextRef contextRef = CGBitmapContextCreate(cvMat.data, // Pointer to backing data
-//                                                  cols, // Width of bitmap
-//                                                  rows, // Height of bitmap
-//                                                  8, // Bits per component
-//                                                  cvMat.step[0], // Bytes per row
-//                                                  colorSpace, // Colorspace
-//                                                  bitmapInfo); // Bitmap info flags
-//
-//  CG.ContextDrawImage(contextRef, CGRectMake(0, 0, cols, rows), image);
-//  CGContextRelease(contextRef);
-//
-//  return cvMat;
-//}
-
 cv::Mat ScreenCapturingCropped(cv::Rect rect = {0, 0, 0, 0})
 {
   TAKEN_TIME();
@@ -344,7 +312,6 @@ int main(int argc, char* argv[])
 
   cv::Mat frame;
   cv::Mat qrMat;
-  cv::Rect detectedRegionOfInterest;
   auto i = 0;
 
 //  cv::VideoWriter video("outDecodingProcess.avi",
