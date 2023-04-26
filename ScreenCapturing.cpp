@@ -307,6 +307,21 @@ size_t filesize(std::string const &filename)
   return in.tellg();
 }
 
+auto readChunkIndexes(std::string const& filename) -> std::set<uint32_t>
+{
+  std::set<uint32_t> chunkIndexes;
+  std::string className;
+  auto fileWithClasses{std::ifstream(filename)};
+  while (std::getline(fileWithClasses, className))
+  {
+    if (!className.empty())
+    {
+      chunkIndexes.insert(std::atoi(className.c_str()));
+    }
+  }
+  return chunkIndexes;
+}
+
 int main(int argc, char* argv[])
 {
   cv::VideoCapture cap;
@@ -361,6 +376,8 @@ int main(int argc, char* argv[])
 //                        10,
 //                        cv::Size(static_cast<int32_t>(cropRoi.width),
 //                                 static_cast<int32_t>(cropRoi.height)));
+
+  successPacketIndexes = readChunkIndexes("./gottenChunks.txt");
 
   auto gottenChunksFile = std::ofstream("./gottenChunks.txt");
   bool isCapturing = true;
