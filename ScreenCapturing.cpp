@@ -176,6 +176,8 @@ struct ScreenShot
 
 #ifndef BUILD_WITH_X11
 #include <ApplicationServices/ApplicationServices.h>
+#include <sys/stat.h>
+#include <filesystem>
 
 cv::Mat cvMatWithGrayImage(CGImageRef imageRef)
 {
@@ -324,10 +326,17 @@ auto readChunkIndexes(std::string const& filename) -> std::set<uint32_t>
 
 int main(int argc, char* argv[])
 {
-  cv::VideoCapture cap;
-  if (argc > 1)
+  std::string videoFile = (argc > 1) ? argv[1] : "";
+  bool isOutputDebugResult = (argc > 2) ? std::atoi(argv[2]) : 0;
+  if (isOutputDebugResult)
   {
-    cap.open(argv[1]);
+    std::filesystem::create_directory("./ResultImages");
+  }
+  std::filesystem::create_directory("./GottenChunks");
+  cv::VideoCapture cap;
+  if (!videoFile.empty())
+  {
+    cap.open(videoFile);
   }
 
   std::vector<std::vector<uint8_t>> decodedDataChunks;
@@ -351,7 +360,7 @@ int main(int argc, char* argv[])
   while (isCapturing && (cv::waitKey(1) < 0))
   {
     //TAKEN_TIME();
-    if (argc > 1)
+    if (!videoFile.empty())
     {
       cap >> frame;
     }
@@ -410,7 +419,10 @@ int main(int argc, char* argv[])
     std::string frameText = std::string("frame: ") + std::to_string(i++) + ", " + progressString;
     std::cout << frameText << std::endl;
     cv::putText(frame, frameText, cv::Point(0, 40), cv::FONT_HERSHEY_SIMPLEX, 2, cv::Scalar(255, 255, 255), 5);
-    imwrite(std::string("./ResultImages/") + std::to_string(i++) + ".jpg", frame);
+    if (isOutputDebugResult)
+    {
+      imwrite(std::string("./ResultImages/") + std::to_string(i++) + ".jpg", frame);
+    }
     //imshow("qrCaptured", frame);
     //video.write(frame);
   }

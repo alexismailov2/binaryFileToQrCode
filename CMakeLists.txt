@@ -98,6 +98,8 @@ add_executable(TestASCIIDataGenerator
 
 if(BUILD_WITH_OpenCV AND BUILD_WITH_ZBar)
 if(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
+set(CMAKE_CXX_STANDARD 14)
+
 add_executable(ScreenCapturing
         ScreenCapturing.cpp)
 
@@ -106,6 +108,9 @@ target_link_libraries(ScreenCapturing
         ${OpenCV_LIBS}
         ${ZBar_LIBS}
         "-framework CoreGraphics")
+
+target_compile_features(ScreenCapturing PUBLIC cxx_std_17)
+
 else()
     add_definitions(-DBUILD_WITH_X11)
     add_executable(ScreenCapturing
