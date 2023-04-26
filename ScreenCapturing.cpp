@@ -346,7 +346,7 @@ int main(int argc, char* argv[])
 
   successPacketIndexes = readChunkIndexes("./gottenChunks.txt");
 
-  auto gottenChunksFile = std::ofstream("./gottenChunks.txt");
+  auto gottenChunksFile = std::ofstream("./gottenChunks.txt", std::ios::app);
   bool isCapturing = true;
   while (isCapturing && (cv::waitKey(1) < 0))
   {
