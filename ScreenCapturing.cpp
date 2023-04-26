@@ -138,30 +138,6 @@ struct ScreenShot
 
   cv::Rect rect;
 };
-
-// g++ screena.cpp -o screena -lX11 -lXext -Ofast -mfpmath=both -march=native -m64 -funroll-loops -mavx2 `pkg-config opencv --cflags --libs` && ./screena
-//#define FPS(start) (CLOCKS_PER_SEC / (clock()-start))
-//int main()
-//{
-//  ScreenShot screen(0, 0, 1920, 1080);
-//  cv::Mat img;
-//
-//  for(uint i;; ++i)
-//  {
-//    double start = clock();
-//
-//    screen(img);
-//
-//    if (!(i & 0b111111))
-//    {
-//      printf("fps %4.f  spf %.4f\n", FPS(start), 1 / FPS(start));
-//    }
-//    break;
-//  }
-//
-//  cv::imshow("img", img);
-//  cv::waitKey(0);
-//}
 #endif
 
 #include "TimeMeasuring.hpp"
