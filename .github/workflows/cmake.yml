@@ -60,7 +60,7 @@ jobs:
     runs-on: ubuntu16
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v2
 
       - name: Preinstall
         run: sudo apt install -y libopencv-dev qtbase5-dev
