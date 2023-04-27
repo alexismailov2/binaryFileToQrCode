@@ -95,44 +95,44 @@ jobs:
           name: Macos-BinnaryFileToQrCodeGUI
           path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
 
-build-macosm1-latest:
-  # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
-  # You can convert this to a matrix build if you need cross-platform coverage.
-  # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
-  runs-on: self-hosted
+  build-macosm1-latest:
+    # The CMake configure and build commands are platform agnostic and should work equally well on Windows or Mac.
+    # You can convert this to a matrix build if you need cross-platform coverage.
+    # See: https://docs.github.com/en/free-pro-team@latest/actions/learn-github-actions/managing-complex-workflows#using-a-build-matrix
+    runs-on: self-hosted
 
-  steps:
-    - uses: actions/checkout@v3
+    steps:
+      - uses: actions/checkout@v3
 
-    - name: Preinstall
-      run: brew install opencv qt@5
+      - name: Preinstall
+        run: brew install opencv qt@5
 
-    - name: Submodules update
-      run: git submodule update --init --recursive
+      - name: Submodules update
+        run: git submodule update --init --recursive
 
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt5/lib/cmake -DBUILD_WITH_OpenCV=ON -DBUILD_WITH_ZBar=ON
+      - name: Configure CMake
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}} -DCMAKE_PREFIX_PATH=/opt/homebrew/opt/qt5/lib/cmake -DBUILD_WITH_OpenCV=ON -DBUILD_WITH_ZBar=ON
 
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
+      - name: Build
+        # Build your program with the given configuration
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}}
 
-    - name: Upload ScreenCapturing
-      uses: actions/upload-artifact@v3
-      with:
-        name: MacosM1-ScreenCapturing
-        path: ${{github.workspace}}/build/ScreenCapturing
+      - name: Upload ScreenCapturing
+        uses: actions/upload-artifact@v3
+        with:
+          name: MacosM1-ScreenCapturing
+          path: ${{github.workspace}}/build/ScreenCapturing
 
-    - name: Upload ASCIIDataEncoder
-      uses: actions/upload-artifact@v3
-      with:
-        name: MacosM1-ASCIIDataEncoder
-        path: ${{github.workspace}}/build/ASCIIDataEncoder
+      - name: Upload ASCIIDataEncoder
+        uses: actions/upload-artifact@v3
+        with:
+          name: MacosM1-ASCIIDataEncoder
+          path: ${{github.workspace}}/build/ASCIIDataEncoder
 
-    - name: Upload BinnaryFileToQrCodeGUI
-      uses: actions/upload-artifact@v3
-      with:
-        name: MacosM1-BinnaryFileToQrCodeGUI
-        path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
+      - name: Upload BinnaryFileToQrCodeGUI
+        uses: actions/upload-artifact@v3
+        with:
+          name: MacosM1-BinnaryFileToQrCodeGUI
+          path: ${{github.workspace}}/build/QtApp/BinnaryFileToQrCodeGUI
