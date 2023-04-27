@@ -153,7 +153,14 @@ struct ScreenShot
 #ifndef BUILD_WITH_X11
 #include <ApplicationServices/ApplicationServices.h>
 #include <sys/stat.h>
+
+#ifdef __APPLE__
 #include <filesystem>
+namespace fs = std::filesystem;
+#else
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#endif
 
 cv::Mat cvMatWithGrayImage(CGImageRef imageRef)
 {
@@ -274,9 +281,9 @@ int main(int argc, char* argv[])
   bool isOutputDebugResult = (argc > 2) ? std::atoi(argv[2]) : 0;
   if (isOutputDebugResult)
   {
-    std::filesystem::create_directory("./ResultImages");
+    fs::create_directory("./ResultImages");
   }
-  std::filesystem::create_directory("./GottenChunks");
+  fs::create_directory("./GottenChunks");
   cv::VideoCapture cap;
   if (!videoFile.empty())
   {
