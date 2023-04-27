@@ -150,13 +150,13 @@ struct ScreenShot
 #include <fstream>
 #include <map>
 
-//#ifdef __APPLE__
+#ifdef UBUNTU16
+#include <experimental/filesystem>
+namespace fs = std::experimental::filesystem;
+#else
 #include <filesystem>
 namespace fs = std::filesystem;
-//#else
-//#include <experimental/filesystem>
-//namespace fs = std::experimental::filesystem;
-//#endif
+#endif
 
 #ifndef BUILD_WITH_X11
 #include <ApplicationServices/ApplicationServices.h>

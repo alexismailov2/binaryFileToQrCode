@@ -6,6 +6,11 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 
 option(BUILD_WITH_OpenCV "Use OpenCV library" OFF)
 option(BUILD_WITH_ZBar "Use Zbar for generator" OFF)
+option(UBUNTU16 "Use old dependencies of c++" OFF)
+
+if (UBUNTU16)
+add_definitions(-DUBUNTU16)
+endif()
 
 if(BUILD_WITH_OpenCV)
 find_package(OpenCV REQUIRED)
@@ -119,7 +124,8 @@ else()
             ${OpenCV_LIBS}
             ${ZBar_LIBS}
             X11
-            Xext)
+            Xext
+            stdc++fs)
 
     target_include_directories(ScreenCapturing
             PRIVATE
