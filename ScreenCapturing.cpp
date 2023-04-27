@@ -150,10 +150,6 @@ struct ScreenShot
 #include <fstream>
 #include <map>
 
-#ifndef BUILD_WITH_X11
-#include <ApplicationServices/ApplicationServices.h>
-#include <sys/stat.h>
-
 #ifdef __APPLE__
 #include <filesystem>
 namespace fs = std::filesystem;
@@ -161,6 +157,10 @@ namespace fs = std::filesystem;
 #include <experimental/filesystem>
 namespace fs = std::experimental::filesystem;
 #endif
+
+#ifndef BUILD_WITH_X11
+#include <ApplicationServices/ApplicationServices.h>
+#include <sys/stat.h>
 
 cv::Mat cvMatWithGrayImage(CGImageRef imageRef)
 {
