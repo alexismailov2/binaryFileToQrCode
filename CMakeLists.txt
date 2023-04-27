@@ -109,9 +109,6 @@ target_link_libraries(ScreenCapturing
         ${ZBar_LIBS}
         "-framework CoreGraphics")
 
-set_property(TARGET ScreenCapturing PROPERTY CXX_STANDARD 17)
-#target_compile_features(ScreenCapturing PUBLIC cxx_std_17)
-
 else()
     add_definitions(-DBUILD_WITH_X11)
     add_executable(ScreenCapturing
@@ -128,6 +125,7 @@ else()
             PRIVATE
             ${CMAKE_CURRENT_LIST_DIR}/zbar/include)
 endif()
+    set_property(TARGET ScreenCapturing PROPERTY CXX_STANDARD 17)
 endif()
 
 add_subdirectory(QtApp)
